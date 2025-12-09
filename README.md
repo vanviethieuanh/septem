@@ -12,6 +12,8 @@ including **Unicode Number Forms** and optional **archaic Roman numerals**.
 
 ### Basic Example
 
+Parsing from string is provided using Rust's `FromStr` trait.
+
 ```rust
 extern crate septem;
 use septem::{Roman};
@@ -20,6 +22,14 @@ let sept: Roman = "vii".parse().unwrap();
 assert_eq!(7, *sept);
 assert_eq!("VII", sept.to_string());
 assert_eq!("vii", sept.to_lowercase());
+
+// unicode
+let sept: Roman = "Ⅶ".parse().unwrap();
+assert_eq!(7, *sept);
+
+// combination with unicode 
+let septendecim: Roman = "XⅦ".parse().unwrap();
+assert_eq!(17, *septendecim);
 ```
 
 The `use septem::prelude::*` is required to support the `std::str::{FromStr}` trait and the `Roman::from_str` function.

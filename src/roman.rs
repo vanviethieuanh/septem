@@ -149,40 +149,51 @@ impl str::FromStr for Roman {
     ///
     /// let sept: Roman = "VII".parse().unwrap();
     /// assert_eq!(7, *sept);
+    ///
+    /// let sept: Roman = "Ⅶ".parse().unwrap();
+    /// assert_eq!(7, *sept);
+    ///
+    /// let septendecim: Roman = "Xⅶ".parse().unwrap();
+    /// assert_eq!(17, *septendecim);
     /// ```
     ///
     /// Returns `Roman` , or an `septem::Error`
     fn from_str(s: &str) -> std::result::Result<Self, Error> {
+        let mut digits = Vec::new();
+        for c in s.chars() {
+            digits.extend(Digit::from_char(c)?);
+        }
+
         use std::cmp::Ordering::{Equal, Greater, Less};
         struct Accumulator {
             val: u32,
             prev: Option<u32>,
         }
-        let mut acc = s
-            .bytes()
-            .try_fold(Accumulator { val: 0, prev: None }, |mut acc, c| {
-                let digit = Digit::from_byte(c)?;
-                let current = *digit;
-                if acc.prev.is_none() {
-                    acc.prev = Some(current);
-                    return Ok(acc);
-                }
-                let prev = acc.prev.unwrap();
-                match current.cmp(&prev) {
-                    Equal => {
-                        acc.val += prev;
-                    }
-                    Less => {
-                        acc.val += prev;
+        let mut acc =
+            digits
+                .into_iter()
+                .try_fold(Accumulator { val: 0, prev: None }, |mut acc, digit| {
+                    let current = *digit;
+                    if acc.prev.is_none() {
                         acc.prev = Some(current);
+                        return Ok(acc);
                     }
-                    Greater => {
-                        acc.val += current - prev;
-                        acc.prev = None;
+                    let prev = acc.prev.unwrap();
+                    match current.cmp(&prev) {
+                        Equal => {
+                            acc.val += prev;
+                        }
+                        Less => {
+                            acc.val += prev;
+                            acc.prev = Some(current);
+                        }
+                        Greater => {
+                            acc.val += current - prev;
+                            acc.prev = None;
+                        }
                     }
-                }
-                Ok(acc)
-            })?;
+                    Ok(acc)
+                })?;
         if let Some(prev) = acc.prev {
             acc.val += prev;
         }
