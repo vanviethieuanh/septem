@@ -1,6 +1,6 @@
 use crate::{Error, Result};
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::ops::{self};
+use std::ops;
 
 /// Representation of a roman digit
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
