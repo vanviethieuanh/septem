@@ -159,45 +159,42 @@ impl str::FromStr for Roman {
     ///
     /// Returns `Roman` , or an `septem::Error`
     fn from_str(s: &str) -> std::result::Result<Self, Error> {
-        let mut digits = Vec::new();
-        for c in s.chars() {
-            digits.extend(Digit::from_char(c)?);
+        use std::cmp::Ordering::{Equal, Greater, Less};
+
+        let mut val = 0u32;
+        let mut prev: Option<u32> = None;
+
+        for digits_result in s.chars().map(Digit::from_char) {
+            for digit in digits_result? {
+                let current = *digit;
+
+                if prev.is_none() {
+                    prev = Some(current);
+                    continue;
+                }
+
+                let p = prev.unwrap();
+                match current.cmp(&p) {
+                    Equal => {
+                        val += p;
+                    }
+                    Less => {
+                        val += p;
+                        prev = Some(current);
+                    }
+                    Greater => {
+                        val += current - p;
+                        prev = None;
+                    }
+                }
+            }
         }
 
-        use std::cmp::Ordering::{Equal, Greater, Less};
-        struct Accumulator {
-            val: u32,
-            prev: Option<u32>,
+        if let Some(prev) = prev {
+            val += prev;
         }
-        let mut acc =
-            digits
-                .into_iter()
-                .try_fold(Accumulator { val: 0, prev: None }, |mut acc, digit| {
-                    let current = *digit;
-                    if acc.prev.is_none() {
-                        acc.prev = Some(current);
-                        return Ok(acc);
-                    }
-                    let prev = acc.prev.unwrap();
-                    match current.cmp(&prev) {
-                        Equal => {
-                            acc.val += prev;
-                        }
-                        Less => {
-                            acc.val += prev;
-                            acc.prev = Some(current);
-                        }
-                        Greater => {
-                            acc.val += current - prev;
-                            acc.prev = None;
-                        }
-                    }
-                    Ok(acc)
-                })?;
-        if let Some(prev) = acc.prev {
-            acc.val += prev;
-        }
-        Ok(Roman(acc.val))
+
+        Ok(Roman(val))
     }
 }
 
